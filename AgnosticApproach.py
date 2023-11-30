@@ -6,11 +6,11 @@ import utils
 import agnosticMethods
 import re
 
-#TODO adventure inventario e goal aggiuntivi
-#TODO traiettorie vanno selezionate con le risposte
+
+# TODO adventure inventario e goal aggiuntivi
+# TODO traiettorie vanno selezionate con le risposte
 
 def game_evaluation(game, mod="rt"):
-
     if mod == "test":
         print("enter first game state (type 'stop' to finish): \n")
         first_state = agnosticMethods.insert_state()
@@ -22,25 +22,27 @@ def game_evaluation(game, mod="rt"):
         with open("second_state.txt", "r") as second_file:
             second_state = second_file.read()
 
-    system_prompt = {"content": '''you are a helpful assistant, you have to understand the game: ''' + game+ '''.
+    system_prompt = {"content": '''you are a helpful assistant, you have to understand the game: ''' + game + '''.
     By observing two states of the game, your task is to find the important aspects of the game, such as the general settings ,
     the score and the goal of the game. Then, you have to compare the two states and to decide which is better in terms of score and goal of the game.
     Finally, you have to give a numerical value from -2 to 2 to your preference, where -2 means that the first state is much better than the second one
     and +2 means the opposite.''', "role": "system"}
     first_prompt = {"content": '''This is the first state:\n''' + first_state + '''\n
     This is the second state:\n''' + second_state + '''\n
-    tell me what is the setting of this game''' , "role": "user"}
-    second_prompt = {"content": '''is there an explicit score in this game? if not, how do you detect progress?''' , "role": "user"}
-    third_prompt = {"content": '''how do you progress and accumulate rewards in this game?''' , "role": "user"}
-    fourth_prompt = {"content": '''based on your previous answers, which is the best state between the first and the second?''' , "role": "user"}
+    tell me what is the setting of this game''', "role": "user"}
+    second_prompt = {"content": '''is there an explicit score in this game? if not, how do you detect progress?''',
+                     "role": "user"}
+    third_prompt = {"content": '''how do you progress and accumulate rewards in this game?''', "role": "user"}
+    fourth_prompt = {
+        "content": '''based on your previous answers, which is the best state between the first and the second?''',
+        "role": "user"}
     fifth_prompt = {"content": '''based on the previous answer, evaluate your preference with a numerical value between -2 and +2. Remember that -2 means that the first state is way
-    better than the second, while +2 means that the second is much better than the first''' , "role": "user"}
+    better than the second, while +2 means that the second is much better than the first''', "role": "user"}
 
     cot_list = [system_prompt]
     cot_list = cot_list + utils.AGNOSTIC_EVALUATION_COT
 
     prompt_list = [first_prompt, second_prompt, third_prompt, fourth_prompt, fifth_prompt]
-
 
     for prompt in prompt_list:
         cot_list.append(prompt)
@@ -53,7 +55,10 @@ def game_evaluation(game, mod="rt"):
         for i in cot_list:
             cot_file.write(str(i) + "\n")
 
+
 """the following method is used to extract useful information regarding rules, goals and actions from the manual of the game"""
+
+
 def game_description():
     with open("hangman_example.txt", "r") as example_file:
         example = example_file.read()
@@ -63,20 +68,25 @@ def game_description():
     manual = agnosticMethods.insert_state()
 
     system_prompt = {"content": '''you are a helpful assistant, you are provided with a manual of a game and an example of the game execution.
-    This is the manual: \n'''+ manual + '''.
+    This is the manual: \n''' + manual + '''.
     This is an example of the game: \n''' + example + '''.
     By reading the manual and observing the execution, you have to answer user's questions. ''', "role": "system"}
 
-    first_prompt = {"content": '''what is the goal of the game?''' , "role": "user"}
-    second_prompt = {"content": '''what is the correct format in which the player should insert the action?''' , "role": "user"}
-    third_prompt = {"content": '''describe the format of valid actions synthetically ''' , "role": "user"}
-    fourth_prompt = {"content":'''is there an explicit score in this game? if not, how do you detect progress?''' , "role": "user"}
+    first_prompt = {"content": '''what is the goal of the game?''', "role": "user"}
+    second_prompt = {"content": '''what is the correct format in which the player should insert the action?''',
+                     "role": "user"}
+    third_prompt = {"content": '''describe the format of valid actions synthetically ''', "role": "user"}
+    fourth_prompt = {"content": '''is there an explicit score in this game? if not, how do you detect progress?''',
+                     "role": "user"}
     fifth_prompt = {"content": '''how do you progress in this game?''', "role": "user"}
     sixth_prompt = {"content": '''what should a player avoid in this game?''', "role": "user"}
     seventh_prompt = {"content": '''is it possible to win the game? how?''', "role": "user"}
     eight_prompt = {"content": '''is it possible to lose the game? how?''', "role": "user"}
-    ninth_prompt = {"content": '''based on your previous answers, list all the information that are useful to succesfully play the game''', "role": "user"}
-    prompt_list = [first_prompt, second_prompt, third_prompt, fourth_prompt, fifth_prompt, sixth_prompt, seventh_prompt, eight_prompt, ninth_prompt]
+    ninth_prompt = {
+        "content": '''based on your previous answers, list all the information that are useful to succesfully play the game''',
+        "role": "user"}
+    prompt_list = [first_prompt, second_prompt, third_prompt, fourth_prompt, fifth_prompt, sixth_prompt, seventh_prompt,
+                   eight_prompt, ninth_prompt]
 
     cot_list = [system_prompt]
 
@@ -95,8 +105,9 @@ def game_description():
 
 
 """the following function is used to make the language model act in the game"""
-def act(game, information, valid_actions):
 
+
+def act(game, information, valid_actions):
     system_prompt = {"content": '''You are an expert player of the game : ''' + game + '''. 
     These are the rules: ''' + information + '''. 
     Your answer should be limited to the format of valid actions:: ''' + valid_actions, "role": "system"}
@@ -178,15 +189,23 @@ def act_simple(game, information, valid_actions):
     These are the rules: ''' + information + '''. 
     These are the valid actions: ''' + valid_actions, "role": "system"}
 
-    first_prompt = {"content": '''based on the information you received, what are the valid action a player can take in this state?''' , "role": "user"}
-    second_prompt = {"content": '''based on the information you received and your previous answer, what is the best action a player can take in this state?''' , "role": "user"}
+    first_prompt = {
+        "content": '''based on the information you received, what are the valid action a player can take in this state?''',
+        "role": "user"}
+    second_prompt = {
+        "content": '''based on the information you received and your previous answer, what is the best action a player can take in this state?''',
+        "role": "user"}
     secondb_prompt = {"content": '''list some examples of valid action, in the correct format''', "role": "user"}
-    secondc_promtp = {"content": '''pick an action from the ones you listed in your previous answer''', "role": "user"}
-    third_prompt = {"content": '''answer with the action you selected in your previous answer. Express your answer in a strictly valid action format, use double quotes ("") to highlight the action''' , "role": "user"}
+    secondc_promtp = {"content": '''pick the best action from the ones you listed in your previous answer''',
+                      "role": "user"}
+    third_prompt = {
+        "content": '''answer with the action you selected in your previous answer. Express your answer in a strictly valid action format, use double quotes ("") to highlight the action''',
+        "role": "user"}
 
     prompt_list = [first_prompt, second_prompt, secondb_prompt, secondc_promtp, third_prompt]
 
     cot_list = [system_prompt]
+
     screen = pyte.Screen(80, 24)
     stream = pyte.ByteStream(screen)
     child = pexpect.spawn(game)
@@ -199,8 +218,12 @@ def act_simple(game, information, valid_actions):
     while True:
         with open("step.txt", "r") as input_file:
             game_state = input_file.read()
-        prompt_state = {"content": game_state + "assistant, based on the information you received, try to explain the state of the game", "role": "user"}
-        cot_list.append(prompt_state)
+        prompt_state_1 = {"content": game_state + "Given this state, please choose an action", "role": "user"}
+        prompt_state_2 = {
+            "content": game_state + "assistant, based on the information you received, try to explain the state of the game",
+            "role": "user"}
+
+        cot_list.append(prompt_state_2)
         model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
         cot_list.append({"content": model_response, "role": "assistant"})
         for prompt in prompt_list:
@@ -210,7 +233,21 @@ def act_simple(game, information, valid_actions):
             cot_answer = {"content": model_response, "role": "assistant"}
             cot_list.append(cot_answer)
         action = cot_list[-1]['content']
-        cot_list = [system_prompt]
+        pattern1 = r'"([^"]*)"'
+        pattern2 = r"'([^']*)'"
+        if game == "snake":
+            matches = [action]
+        else:
+            match = re.findall(pattern1, action)
+
+            if len(match[0]) == 1 :
+                matches = [match[0]]
+            else:
+
+                matches = re.findall(pattern2, match[0])
+
+        cot_list = [system_prompt, prompt_state_1, {"content": matches[0], "role": "assistant"}]
+
         command = None
         if game == "snake":
             if "right" in model_response:
@@ -221,10 +258,6 @@ def act_simple(game, information, valid_actions):
                 command = '\033\117\101'
             elif "down" in model_response:
                 command = '\033\117\102'
-
-        pattern = r'"([^"]*)"'
-
-        matches = re.findall(pattern, action)
 
         child.send(command) if command is not None else child.send(matches[0])
         try:
@@ -249,25 +282,23 @@ def act_simple(game, information, valid_actions):
         with open("responses.txt", "a") as resp_file:
             resp_file.write(model_response + "\n")
 
+
 def pipeline(game):
     actions_format, actions_valid, information = game_description()
     print("information: " + information)
     print("actions format: " + actions_format)
     episode_count = 0
     act_simple(game, information, actions_format)
-    #while act(game, information, actions_format) == "game over":
+    # while act(game, information, actions_format) == "game over":
     #    episode_count += 1
 
-#act("hangman", "the goal of the game is to guess the word that the computer has chosen. The player has 6 attempts to guess the word. The player can guess a letter or the entire word. The player wins if he guesses the word, otherwise he loses.", "the player can guess a letter or the entire word")
 
-#game_description()
+# act("hangman", "the goal of the game is to guess the word that the computer has chosen. The player has 6 attempts to guess the word. The player can guess a letter or the entire word. The player wins if he guesses the word, otherwise he loses.", "the player can guess a letter or the entire word")
+
+# game_description()
 
 pipeline("hangman")
 
+# act("hangman", "the goal of the game is to guess the word that the computer has chosen. The player has 6 attempts to guess the word. The player can guess a letter or the entire word. The player wins if he guesses the word, otherwise he loses.", "the player can guess a letter or the entire word")
 
-#act("hangman", "the goal of the game is to guess the word that the computer has chosen. The player has 6 attempts to guess the word. The player can guess a letter or the entire word. The player wins if he guesses the word, otherwise he loses.", "the player can guess a letter or the entire word")
-
-#game_description()
-
-
-
+# game_description()

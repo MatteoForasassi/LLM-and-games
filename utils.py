@@ -15,7 +15,7 @@ def text_to_image(input_text, output_image, font_size=20, image_size=(500, 500),
     draw = ImageDraw.Draw(image)
 
     # Set the font size and color
-    draw.font = ImageFont.truetype("arial.ttf", font_size)
+    draw.font = ImageFont.truetype("LiberationSans-Regular.ttf", font_size)
     draw.text((10, 10), input_text, fill=text_color, font=font)
 
     # Save the image to a file
@@ -28,21 +28,8 @@ output_image = "output_image.png"
 
 text_to_image(input_text, output_image)
 
-def create_timelapse(input_folder, output_video, framerate=10):
-    images = []
-    for filename in sorted(os.listdir(input_folder)):
-        if filename.endswith(".png"):
-            filepath = os.path.join(input_folder, filename)
-            images.append(imageio.imread(filepath))
 
-    imageio.mimsave(output_video, images, fps=framerate)
 
-# Example usage
-input_folder = "frames"  # Change this to the folder containing your images
-output_video = "output_timelapse.mp4"
-framerate = 10  # Adjust the frame rate as needed
-
-create_timelapse(input_folder, output_video, framerate)
 
 
 #====================================================================PROMPTS=======================================================================================
