@@ -44,12 +44,7 @@ def game_evaluation(game, mod="rt"):
 
     prompt_list = [first_prompt, second_prompt, third_prompt, fourth_prompt, fifth_prompt]
 
-    for prompt in prompt_list:
-        cot_list.append(prompt)
-        model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
-        print('content:' + prompt['content'] + "\n" + 'response:' + model_response)
-        cot_answer = {"content": model_response, "role": "assistant"}
-        cot_list.append(cot_answer)
+    cot_list = cot_reasoning(cot_list, prompt_list)[0]
 
     with open("agno_transcripts.txt", "w") as cot_file:
         for i in cot_list:
@@ -90,12 +85,7 @@ def game_description():
 
     cot_list = [system_prompt]
 
-    for prompt in prompt_list:
-        cot_list.append(prompt)
-        model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
-        print('content:' + prompt['content'] + "\n" + 'response:' + model_response)
-        cot_answer = {"content": model_response, "role": "assistant"}
-        cot_list.append(cot_answer)
+    cot_list = cot_reasoning(cot_list, prompt_list)[0]
 
     with open("agno_transcripts.txt", "w") as cot_file:
         for i in cot_list:
@@ -225,26 +215,35 @@ def act_simple(game, information, valid_actions):
 
         cot_list.append(prompt_state_2)
         model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
+
         cot_list.append({"content": model_response, "role": "assistant"})
-        for prompt in prompt_list:
-            cot_list.append(prompt)
-            model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
-            print('content:' + prompt['content'] + "\n" + 'response:' + model_response)
-            cot_answer = {"content": model_response, "role": "assistant"}
-            cot_list.append(cot_answer)
-        action = cot_list[-1]['content']
+
+        cot_list, count = cot_reasoning(cot_list, prompt_list)
+        #count = cot_reasoning(cot_list, prompt_list)[1]
+
+
+        if count == len(prompt_list):
+            #if len(cot_list) == 14:
+            if game == 'hangman':
+                cot_list = check_valid_answer(cot_list)
+
         pattern1 = r'"([^"]*)"'
-        pattern2 = r"'([^']*)'"
+        action = cot_list[-1]['content']
+        print(action)
+        #pattern2 = r"'([^']*)'"
+        matches = []
         if game == "snake":
             matches = [action]
-        else:
-            match = re.findall(pattern1, action)
+        elif game == "hangman":
+            #match = re.findall(pattern1, action)
 
-            if len(match[0]) == 1 :
-                matches = [match[0]]
-            else:
-
-                matches = re.findall(pattern2, match[0])
+            #if len(match[0]) == 1:
+            #    matches = [match[0]]
+            #elif bool(re.search(pattern1, match[0])):
+            #    matches = re.findall(pattern1, match[0])
+            #else:
+             #   matches = re.findall(pattern2, match[0])
+            matches = re.findall(pattern1, action)
 
         cot_list = [system_prompt, prompt_state_1, {"content": matches[0], "role": "assistant"}]
 
@@ -281,6 +280,53 @@ def act_simple(game, information, valid_actions):
         # write the model response in a file
         with open("responses.txt", "a") as resp_file:
             resp_file.write(model_response + "\n")
+
+
+def check_valid_answer(cot_list):
+    pattern1 = r'"([^"]*)"'
+    #final_cot = cot_list[-1]['content']
+
+    if not bool(re.search(pattern1, cot_list[-1]['content'])):
+        while True:
+            cot_list.pop()
+            model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
+            print('response:' + model_response)
+            cot_answer = {"content": model_response, "role": "assistant"}
+            cot_list.append(cot_answer)
+            if bool(re.search(pattern1, model_response)):
+                match = re.findall(pattern1, model_response)
+                if len(match[0]) == 1:
+                    break
+    #elif len(re.findall(pattern1, cot_list[-1]['content'])):
+    else:
+        while True:
+            match = re.findall(pattern1, cot_list[-1]['content'])
+            if len(match[0]) == 1:
+                break
+            else:
+                cot_list.pop()
+                model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
+                print('response:' + model_response)
+                cot_answer = {"content": model_response, "role": "assistant"}
+                cot_list.append(cot_answer)
+                if bool(re.search(pattern1, model_response)):
+                    match = re.findall(pattern1, model_response)
+                    if len(match[0]) == 1:
+                        break
+
+    return cot_list
+
+
+def cot_reasoning(cot_list, prompt_list):
+    count = 0
+    for prompt in prompt_list:
+        cot_list.append(prompt)
+        model_response = agnosticMethods.call_model_for_agn_evaluation("vicuna", cot_list)
+        print('content:' + prompt['content'] + "\n" + 'response:' + model_response)
+        cot_answer = {"content": model_response, "role": "assistant"}
+        cot_list.append(cot_answer)
+        count = count + 1
+    return cot_list, count
 
 
 def pipeline(game):
